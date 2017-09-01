@@ -49,10 +49,16 @@ SETTINGS = {
     'PIPELINE_CSS': {
         'game-scss': {
             'source_filenames': (
-              'game/sass/game.scss',
+                'game/sass/game.scss',
             ),
             'output_filename': 'game.css',
         },
+        'game-scss-new': {
+            'source_filenames': (
+                'game/sass/game_new.scss',
+            ),
+            'output_filename': 'game_new.css'
+        }
     },
     'PIPELINE_CSS_COMPRESSOR': None,
     'INSTALLED_APPS': [

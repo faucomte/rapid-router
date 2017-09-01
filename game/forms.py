@@ -36,7 +36,7 @@
 # identified as the original program.
 from django import forms
 from django.utils.translation import ugettext
-from models import UserProfile, Level
+from models import UserProfile, Level, Episode
 from widgets import DropDownMenuSelectMultiple
 import itertools
 
@@ -76,24 +76,42 @@ class ScoreboardForm(forms.Form):
 
         self.fields['classes'] = forms.MultipleChoiceField(
             choices=classes_choices,
-            widget=DropDownMenuSelectMultiple(
-                attrs={'class': 'wide', 'multiplePlaceholder': ugettext('Select classes')}
+            widget=forms.CheckboxSelectMultiple(
+                attrs={'class': 'wide classes', 'multiplePlaceholder': ugettext('Select classes')}
             ),
         )
-        # Each tuple in choices has two elements, id and name of each level
-        # First element is the actual value set on the model
-        # Second element is the string displayed on the drop down menu
-        choice_list = ((level.id, str(level)) for level in Level.objects.sorted_levels())
-        self.fields['levels'] = forms.MultipleChoiceField(
-            choices=itertools.chain(choice_list),
-            widget=DropDownMenuSelectMultiple(
-                attrs={'class': 'wide', 'multiplePlaceholder': ugettext('Select levels')})
-        )
+
+        levels_per_episodes = []
+        episode = Episode.objects.get(pk=1)
+        while episode is not None:
+            levels = []
+            minName = None
+            maxName = None
+            for level in episode.levels:
+                level_name = int(level.name)
+                if not maxName or level_name > maxName:
+                    maxName = level_name
+                if not minName or level_name < minName:
+                    minName = level_name
+
+                levels.append({
+                    "id": level.id,
+                    "name": level_name})
+
+            e = {"id": episode.id,
+                 "name": episode.name,
+                 "levels": levels,
+                 "first_level": minName,
+                 "last_level": maxName,
+                 "random_levels_enabled": episode.r_random_levels_enabled}
+
+            levels_per_episodes.append(e)
+            episode = episode.next_episode
+
         def validate(self):
             cleaned_data = super(ScoreboardForm, self).clean()
             classes = cleaned_data.get('classes')
-            levels = cleaned_data.get('levels')
-            return classes and levels
+            return classes and levels_per_episodes
 
 
 class LevelModerationForm(forms.Form):
